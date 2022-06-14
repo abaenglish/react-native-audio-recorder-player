@@ -65,7 +65,15 @@ class RNAudioRecorderPlayer: RCTEventEmitter, AVAudioRecorderDelegate {
                 "currentMetering": currentMetering,
             ] as [String : Any];
 
-            sendEvent(withName: "rn-recordback", body: status)
+            let exception = tryBlock{
+                self.sendEvent(withName: "rn-recordback", body: status)
+            }
+            
+            if (exception != nil) {
+                print("Error sending event")
+                stopRecorder(resolve: { _ in }, rejecter: { _,_,_  in })
+                stopPlayer(resolve: { _ in }, rejecter: { _,_,_  in })
+            }
         }
     }
 
@@ -318,11 +326,20 @@ class RNAudioRecorderPlayer: RCTEventEmitter, AVAudioRecorderDelegate {
         timeObserverToken = audioPlayer.addPeriodicTimeObserver(forInterval: time,
                                                                 queue: .main) {_ in
             if (self.audioPlayer != nil) {
-                self.sendEvent(withName: "rn-playback", body: [
-                    "isMuted": self.audioPlayer.isMuted,
-                    "currentPosition": self.audioPlayerItem.currentTime().seconds * 1000,
-                    "duration": self.audioPlayerItem.asset.duration.seconds * 1000,
-                ])
+                
+                let exception = tryBlock{
+                    self.sendEvent(withName: "rn-playback", body: [
+                        "isMuted": self.audioPlayer.isMuted,
+                        "currentPosition": self.audioPlayerItem.currentTime().seconds * 1000,
+                        "duration": self.audioPlayerItem.asset.duration.seconds * 1000,
+                    ])
+                }
+                
+                if (exception != nil) {
+                    print("Error sending event")
+                    self.stopRecorder(resolve: { _ in }, rejecter: { _,_,_  in })
+                    self.stopPlayer(resolve: { _ in }, rejecter: { _,_,_  in })
+                }
             }
         }
     }
