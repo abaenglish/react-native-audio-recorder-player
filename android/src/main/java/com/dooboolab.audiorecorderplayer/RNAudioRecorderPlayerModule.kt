@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 import com.facebook.react.modules.core.PermissionListener
+import java.lang.IllegalStateException
 import java.io.IOException
 import java.util.*
 import kotlin.math.log10
@@ -221,10 +222,16 @@ class RNAudioRecorderPlayerModule(private val reactContext: ReactApplicationCont
                  */
                 mTask = object : TimerTask() {
                     override fun run() {
-                        val obj = Arguments.createMap()
-                        obj.putInt("duration", mp.duration)
-                        obj.putInt("currentPosition", mp.currentPosition)
-                        sendEvent(reactContext, "rn-playback", obj)
+                        try {
+                            val obj = Arguments.createMap()
+                            obj.putInt("duration", mp.duration)
+                            obj.putInt("currentPosition", mp.currentPosition)
+                            sendEvent(reactContext, "rn-playback", obj)
+                        } catch (e: IllegalStateException) {
+                            Log.e(tag, "Illegal state when read MediaPlayer current position")
+                        } catch (e: Exception) {
+                            Log.e(tag, "Cannot get event data to send rn-playback")
+                        }
                     }
                 }
 
